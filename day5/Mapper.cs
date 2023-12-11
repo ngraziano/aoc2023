@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace day5
+﻿namespace day5
 {
     public record Interval()
     {
@@ -84,13 +78,13 @@ namespace day5
                     continue;
                 }
                 // M5
-                if (interval.Start >= mapping.StartSource && interval.End < mapping.EndSource  )
+                if (interval.Start >= mapping.StartSource && interval.End < mapping.EndSource)
                 {
                     continue;
                 }
-              
+
                 //M2
-                if (interval.Start >= mapping.StartSource   && interval.End >= mapping.EndSource )
+                if (interval.Start >= mapping.StartSource && interval.End >= mapping.EndSource)
                 {
                     yield return new Interval { Start = interval.Start, End = mapping.EndSource - 1 };
                     interval.Start = mapping.EndSource;
@@ -105,7 +99,7 @@ namespace day5
                     continue;
                 }
                 //M4
-                if (interval.Start < mapping.StartSource && interval.End >= mapping.StartSource    )
+                if (interval.Start < mapping.StartSource && interval.End >= mapping.StartSource)
                 {
                     yield return new Interval { Start = interval.Start, End = mapping.StartSource - 1 };
                     interval.Start = mapping.StartSource;
@@ -118,7 +112,7 @@ namespace day5
                 }
 
             }
-            yield return new Interval { Start = interval.Start, End = interval.End } ;
+            yield return new Interval { Start = interval.Start, End = interval.End };
         }
     }
 }

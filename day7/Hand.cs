@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace day7
+﻿namespace day7
 {
     public class Hand : IComparable<Hand>
     {
@@ -15,8 +9,8 @@ namespace day7
 
         public Hand(string hand, int bid)
         {
-            this.HandString = hand;
-            this.Bid = bid;
+            HandString = hand;
+            Bid = bid;
 
             handType = CalculateHandType(hand);
 
@@ -59,18 +53,14 @@ namespace day7
 
         }
 
-        private static int CardToStrengh(char card)
+        private static int CardToStrengh(char card) => card switch
         {
-            return card switch
-            {
-                'A' => 14,
-                'K' => 13,
-                'Q' => 12,
-                'J' => 11,
-                'T' => 10,
-                _ => card - '0',
-            };
-
-        }
+            'A' => 14,
+            'K' => 13,
+            'Q' => 12,
+            'J' => 11,
+            'T' => 10,
+            _ => card - '0',
+        };
     }
 }

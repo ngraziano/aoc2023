@@ -1,19 +1,6 @@
 ﻿
 using day5;
-using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-/*
-IEnumerable<long> CreateLongRange(long start, long count)
-{
-    var limit = start + count;
-
-    while (start < limit)
-    {
-        yield return start;
-        start++;
-    }
-}*/
 
 IEnumerable<long> CreateLongRange(long start, long count)
 {
@@ -91,28 +78,25 @@ var dataIntervals = seedsId
     .Select((value, index) => (value, index))
     .GroupBy(e => e.index / 2)
     .Select(e => new Interval { Start = e.First().value, End = e.First().value + e.Last().value - 1 })
-    .OrderBy(i=>i.Start)
+    .OrderBy(i => i.Start)
     .ToList();
 
 foreach (var mapper in mapperList)
 {
 
     Console.WriteLine($"===============  {mapper.Source} =>  {mapper.Destination} ===================");
-    dataIntervals = dataIntervals.SelectMany(interval => {
+    dataIntervals = dataIntervals.SelectMany(interval =>
+    {
         Console.Write($"[{interval.Start} .. {interval.End}] =>");
 
         var newinterval = mapper.Map(interval).ToList();
-        foreach(var i in newinterval)
+        foreach (var i in newinterval)
         {
             Console.Write($"[{i.Start} .. {i.End}] ");
         }
         Console.WriteLine();
         return newinterval;
-        }).OrderBy(i=>i.Start).ToList();
-
-       
-
-
+    }).OrderBy(i => i.Start).ToList();
 }
 
 var minValue = dataIntervals.Min(inteval => inteval.Start);
