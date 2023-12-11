@@ -1,17 +1,13 @@
 ﻿
-/* first version 
 var sum = File.ReadLines("input.txt").Select(
     line =>
     {
-        var isNumber = (char x) => '0' <= x && x <= '9';
-        var first = line.First(isNumber);
-        var last = line.Last(isNumber);
+        var first = line.First(char.IsDigit);
+        var last = line.Last(char.IsDigit);
         return int.Parse($"{first}{last}");
-
     }).Sum();
-*/
 
-
+Console.WriteLine($"Part 1 {sum}");
 
 var digits = new Dictionary<string, int> {
     { "zero",0 },
@@ -36,17 +32,15 @@ var digits = new Dictionary<string, int> {
     { "9",9},
 };
 
-
-var sum = File.ReadLines("input.txt").Select(
+var sum2 = File.ReadLines("input.txt").Select(
     line =>
     {
         var digitpos = digits.SelectMany(
-             (elem) => line.AllIndexOf(elem.Key).Select(pos => new { pos, val = elem.Value })
+             (elem) => line.AllIndexOf(elem.Key).Select(pos => (pos, elem.Value))
             );
-        var first = digitpos.MinBy(e => e.pos)?.val ?? 0;
-        var last = digitpos.MaxBy(e => e.pos)?.val ?? 0;
+        var first = digitpos.MinBy(e => e.pos).Value;
+        var last = digitpos.MaxBy(e => e.pos).Value;
         return (first * 10) + last;
     }).Sum();
 
-
-Console.WriteLine(sum);
+Console.WriteLine($"Part 2 {sum2}");

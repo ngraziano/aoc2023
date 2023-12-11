@@ -1,6 +1,4 @@
-﻿
-
-static class StringUtils
+﻿static class StringUtils
 {
     public static IEnumerable<int> AllIndexOf(this string line, string valString)
     {
