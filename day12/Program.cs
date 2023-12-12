@@ -1,20 +1,28 @@
 ﻿
+using day12;
+using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Linq;
 
-int NbMatch(Span<char> condition, IEnumerable<int> conditionGroups, char previousState)
+static long NbMatch(Span<char> condition, IEnumerable<int> conditionGroups, bool wasInGroup, Stats stats)
 {
+
+    if (!stats.CheckStat())
+    {
+        return 0;
+    }
+
     if (condition.Length == 0)
     {
         return (!conditionGroups.Any() || (conditionGroups.Last() == 0)) ? 1 : 0;
     }
 
-    var path1 = 0;
-    if (condition[0] == '.' || condition[0] == '?')
+    var path1 = 0L;
+    var currentState = condition[0];
+    if (currentState == '.' || currentState == '?')
     {
-        if (previousState == '.' || previousState == ' ')
+        if (!wasInGroup)
         {
-            path1 = NbMatch(condition[1..], conditionGroups, '.');
+            path1 = NbMatch(condition[1..], conditionGroups, false, currentState == '.' ? stats : stats.DecPassed());
         }
         else if (conditionGroups.FirstOrDefault(1) > 0)
         {
@@ -22,14 +30,12 @@ int NbMatch(Span<char> condition, IEnumerable<int> conditionGroups, char previou
         }
         else
         {
-            path1 = NbMatch(condition[1..], conditionGroups.Skip(1).ToList(), '.');
+            path1 = NbMatch(condition[1..], conditionGroups.Skip(1).ToList(), false, currentState == '.' ? stats : stats.DecPassed());
 
         }
-        // Console.WriteLine($"/// =>.{condition[1..]} {string.Join(',', conditionGroups)}\t\t{path1}");
-
     }
-    var path2 = 0;
-    if (condition[0] == '#' || condition[0] == '?')
+    var path2 = 0L;
+    if (currentState == '#' || currentState == '?')
     {
         if (conditionGroups.FirstOrDefault(0) == 0)
         {
@@ -37,15 +43,10 @@ int NbMatch(Span<char> condition, IEnumerable<int> conditionGroups, char previou
         }
         else
         {
-            path2 = NbMatch(condition[1..], conditionGroups.Skip(1).Prepend(conditionGroups.First() - 1).ToList(), '#');
+            path2 = NbMatch(condition[1..], conditionGroups.Skip(1).Prepend(conditionGroups.First() - 1).ToList(), true, currentState == '#' ? stats : stats.DecFailed());
 
         }
-        // Console.WriteLine($"/// =>#{condition[1..]} {string.Join(',', conditionGroups)}\t\t{path2}");
-
     }
-
-    // Console.WriteLine($"PPP =>{condition} {string.Join(',', conditionGroups)}\t\t{path1 + path2}");
-
     return path1 + path2;
 }
 
@@ -57,8 +58,11 @@ var sumNb = File.ReadLines("input.txt")
     var condition = linePart[0];
     var conditionGroups = linePart[1].Split(",").Select(int.Parse).ToList();
 
+    var stat = Stats.CalculateStats(condition.ToCharArray(), conditionGroups);
+    if (!stat.CheckStat())
+        throw new InvalidOperationException();
     // naive
-    var nbMatch = NbMatch(condition.ToCharArray(), conditionGroups, ' ');
+    var nbMatch = NbMatch(condition.ToCharArray(), conditionGroups, false, stat);
     Console.WriteLine($"{line} \t\t{nbMatch}");
     return nbMatch;
 }).Sum();
@@ -68,7 +72,7 @@ Console.WriteLine($"Part 1 {sumNb}");
 
 
 var sumNbUnfold = File.ReadLines("input.txt")
-    .AsParallel().AsUnordered()
+    .AsParallel().WithDegreeOfParallelism(24).AsUnordered()
     .Select((line, index) =>
     {
         var stopwatch = Stopwatch.StartNew();
@@ -79,11 +83,16 @@ var sumNbUnfold = File.ReadLines("input.txt")
         var condition = condition0 + '?' + condition0 + '?' + condition0 + '?' + condition0 + '?' + condition0;
         var conditionGroups = conditionGroups0.Concat(conditionGroups0).Concat(conditionGroups0).Concat(conditionGroups0).Concat(conditionGroups0).ToList();
 
+
+        var stat = Stats.CalculateStats(condition.ToCharArray(), conditionGroups);
+        if (!stat.CheckStat())
+            throw new InvalidOperationException();
+
         // naive
-        var nbMatch = NbMatch(condition.ToCharArray(), conditionGroups, ' ');
+        var nbMatch = NbMatch(condition.ToCharArray(), conditionGroups, false, stat);
 
         stopwatch.Stop();
-        Console.WriteLine($"({index:0000}) {nbMatch,10} {stopwatch.Elapsed}  {line} ");
+        Console.WriteLine($"({index:000}) {nbMatch,10} {stopwatch.Elapsed}  {line} ");
         return nbMatch;
     }).Sum();
 
