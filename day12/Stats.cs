@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace day12
 {
-    struct Stats
+    struct  Stats
     {
         public int knowFailed;
         public int knowPassed;
@@ -14,6 +14,7 @@ namespace day12
         public int totalFailed;
         public int totalPassed;
 
+        
 
 
         public static Stats CalculateStats(Span<char> condition, IEnumerable<int> conditionGroups)
