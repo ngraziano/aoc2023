@@ -1,43 +1,22 @@
-﻿
-
-
-static int FindMirror(IList<string> data)
+﻿static int FindMirror(IList<string> data)
 {
-    var nbLigne = data.Count;
-    for (int i = 0; i < nbLigne; i++)
-    {
-        bool isValid = true;
-        for (int j = 0; i - j >= 0 && i + j + 1 < nbLigne; j++)
-        {
-            if (data[i - j] != data[i + j + 1])
-            {
-                isValid = false;
-                break;
-            }
-        }
-        if (isValid)
-            return i +1;
-    }
-    return nbLigne;
+    return FindAllMirrors(data).First();
 }
 
 static IEnumerable<int> FindAllMirrors(IList<string> data)
 {
     var nbLigne = data.Count;
-    for (int i = 0; i < nbLigne; i++)
+    return Enumerable.Range(0, nbLigne).Where(i =>
     {
-        bool isValid = true;
         for (int j = 0; i - j >= 0 && i + j + 1 < nbLigne; j++)
         {
             if (data[i - j] != data[i + j + 1])
             {
-                isValid = false;
-                break;
+                return false;
             }
         }
-        if (isValid)
-            yield return i +1;
-    }
+        return true;
+    }).Select(i => i + 1);
 }
 
 static List<string> TransposeStrings(List<string> data) =>
@@ -58,115 +37,90 @@ static bool diffByOnlyOne(string a, string b)
     return nbDiff == 1;
 }
 
-var lineEnumerator = File.ReadLines("input.txt").GetEnumerator();
-
-
-
-
-bool moreData;
-
-var totalH = 0;
-var totalV = 0;
-
-do
+var total = File.ReadLines("input.txt").Split(string.IsNullOrEmpty).Select(block =>
 {
-    moreData = lineEnumerator.MoveNext();
-    List<string> data = [];
-    while (!string.IsNullOrWhiteSpace(lineEnumerator.Current))
-    {
-        data.Add(lineEnumerator.Current);
-        moreData = lineEnumerator.MoveNext();
-    }
+    var data = block.ToList();
 
+    // check horizontal
     int hMirror = FindMirror(data);
     if (hMirror < data.Count)
     {
-        totalH += hMirror;
+        return hMirror * 100;
     }
-    else
-    {
-        data = TransposeStrings(data);
-        int vMirror = FindMirror(data);
-        totalV += vMirror;
-    }
-}
-while (moreData);
+    // check vertical
+    data = TransposeStrings(data);
+    return FindMirror(data);
+}).Sum();
 
-Console.WriteLine($"Part1 {totalH * 100 + totalV}");
+Console.WriteLine($"Part1 {total}");
 
-lineEnumerator.Dispose();
-lineEnumerator = File.ReadLines("input.txt").GetEnumerator();
 
-totalH = 0;
-totalV = 0;
 int patternNb = 0;
-do
+var totalPart2 = File.ReadLines("input.txt").Split(string.IsNullOrEmpty).Select(block =>
 {
+    var data = block.ToList();
+
     patternNb++;
-    moreData = lineEnumerator.MoveNext();
-    List<string> data = [];
-    while (!string.IsNullOrWhiteSpace(lineEnumerator.Current))
-    {
-        data.Add(lineEnumerator.Current);
-        moreData = lineEnumerator.MoveNext();
-    }
 
-    bool findSmudge = false;
     int hOriginalMirror = FindMirror(data);
-    for (int smudgeLine = 0; smudgeLine < data.Count - 1 && !findSmudge; smudgeLine++)
-    {
-        for (int copiedLine = smudgeLine + 1; copiedLine < data.Count && !findSmudge; copiedLine++)
-        {
-            if (diffByOnlyOne(data[smudgeLine], data[copiedLine]))
+    var newHMirrors = data[..^1].SelectMany((smudgeLine, smudgeLineIndex) =>
+        data[(smudgeLineIndex + 1)..]
+            .Where(copiedLine => diffByOnlyOne(smudgeLine, copiedLine))
+            .Select(copiedLine => new List<string>(data) { [smudgeLineIndex] = copiedLine })
+            .SelectMany(dataSmuged => FindAllMirrors(dataSmuged).Where(hMirror => hMirror < dataSmuged.Count && hMirror != hOriginalMirror))
+            .Select(hMirror =>
             {
-                var dataSmuged = new List<string>(data);
-                dataSmuged[smudgeLine] = data[copiedLine];
-
-                foreach (var hMirror in FindAllMirrors(dataSmuged))
-                {
-                    if (hMirror < dataSmuged.Count && hMirror != hOriginalMirror)
-                    {
-                        Console.WriteLine($"({patternNb:00}) Smuged line {smudgeLine} with line {copiedLine} H mirror at {hMirror} original was {hOriginalMirror}");
-                        totalH += hMirror;
-                        findSmudge = true;
-                    }
-                }
-            }
-
-        }
-    }
-    if (!findSmudge)
+                Console.WriteLine($"({patternNb:00}) Smuged line {smudgeLineIndex} H mirror at {hMirror} original was {hOriginalMirror}");
+                return 100 * hMirror;
+            })
+    ).Take(1);
+    if (newHMirrors.Any())
     {
-        data = TransposeStrings(data);
-        int vOriginalMirror = FindMirror(data);
+        return newHMirrors.First();
+    }
 
-        for (int smudgeLine = 0; smudgeLine < data.Count - 1 && !findSmudge; smudgeLine++)
+    data = TransposeStrings(data);
+    int vOriginalMirror = FindMirror(data);
+    var newVMirrors = data[..^1].SelectMany((smudgeLine, smudgeLineIndex) =>
+    data[(smudgeLineIndex + 1)..]
+        .Where(copiedLine => diffByOnlyOne(smudgeLine, copiedLine))
+        .Select(copiedLine => new List<string>(data) { [smudgeLineIndex] = copiedLine })
+        .SelectMany(dataSmuged => FindAllMirrors(dataSmuged).Where(vMirror => vMirror < dataSmuged.Count && vMirror != vOriginalMirror))
+        .Select(vMirror =>
         {
-            for (int copiedLine = smudgeLine + 1; copiedLine < data.Count && !findSmudge; copiedLine++)
-            {
-                if (diffByOnlyOne(data[smudgeLine], data[copiedLine]))
-                {
-                    var dataSmuged = new List<string>(data);
-                    dataSmuged[smudgeLine] = data[copiedLine];
-                    foreach (var vMirror in FindAllMirrors(dataSmuged))
-                    {
-                        if (vMirror < dataSmuged.Count && (vMirror != vOriginalMirror))
-                        {
-                            Console.WriteLine($"({patternNb:00}) Smuged colums {smudgeLine} with colums {copiedLine} V mirror at {vMirror}  original was {vOriginalMirror}");
-                            totalV += vMirror;
-                            findSmudge = true;
-                        }
-                    }
-                }
+            Console.WriteLine($"({patternNb:00}) Smuged line {smudgeLineIndex} V mirror at {vMirror} original was {hOriginalMirror}");
+            return vMirror;
+        })
+    ).Take(1);
+    if (newVMirrors.Any())
+    {
+        return newVMirrors.First();
+    }
+    throw new Exception("No smudge finded, check the code");
+}).Sum();
+Console.WriteLine($"Part2 {totalPart2}");
 
+
+static class SplitEnum
+{
+    public static IEnumerable<IEnumerable<TSource>> Split<TSource>(this IEnumerable<TSource> source, Func<TSource, bool> separatorFunc)
+    {
+        List<TSource>? items = null;
+        foreach (var item in source)
+        {
+            if (separatorFunc(item))
+            {
+                yield return items ?? Enumerable.Empty<TSource>();
+                items = null;
+            }
+            else
+            {
+                items ??= [];
+                items.Add(item);
             }
         }
-    }
-    if (!findSmudge)
-    {
-        throw new Exception("No smudge finded, check the code");
+
+        if (items?.Count > 0)
+            yield return items;
     }
 }
-while (moreData);
-
-Console.WriteLine($"Part2 {totalH * 100 + totalV}");
