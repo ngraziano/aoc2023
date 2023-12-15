@@ -1,4 +1,7 @@
-﻿const int maxRedCubes = 12;
+﻿using System.Drawing;
+using System.Linq;
+
+const int maxRedCubes = 12;
 const int maxGreenCubes = 13;
 const int maxBlueCubes = 14;
 
@@ -12,23 +15,25 @@ static int MaxByColorName(string colorName) => colorName switch
 
 var sumOfId = File.ReadAllLines("input.txt").Select(line =>
 {
-    var part = line.Split(":");
-    int gameID = int.Parse(part[0].Split(" ")[1]);
-
-    foreach (var reaveal in part[1].Split(";"))
+    var (gameID, gameData) = line.Split(":") switch
     {
-        foreach (var colorReveal in reaveal.Trim().Split(","))
-        {
-            var colorPart = colorReveal.Trim().Split(" ");
-            var nbCube = int.Parse(colorPart[0]);
-            var maxNbCube = MaxByColorName(colorPart[1]);
-            if (nbCube > maxNbCube)
-            {
-                return null;
-            }
-        }
-    }
-    return (int?)gameID;
+        [string id, string data] => (int.Parse(id.Split(' ')[1]), data),
+        _ => throw new InvalidDataException("Line invalid"),
+    };
+
+    return gameData.Split(";").SelectMany(reaveal =>
+         reaveal.Trim().Split(",").Select(
+         (string color, int nbCube) (colorReveal) => colorReveal.Trim().Split(" ") switch
+             {
+                 [var nb, var c] => (c, int.Parse(nb)),
+                 _ => throw new InvalidDataException(),
+             }
+         )
+     )
+     .Select((int maxNbCube, int nbCube) (e) => (MaxByColorName(e.color), e.nbCube))
+     .Where((e) => e.nbCube > e.maxNbCube)
+     .Select(_ => (int?)null)
+     .FirstOrDefault(gameID);
 })
     .Where(id => id is not null)
     .Sum();
@@ -39,31 +44,32 @@ Console.WriteLine($"Part 1 Sum of game ids {sumOfId}");
 
 var sumOfPower = File.ReadAllLines("input.txt").Select(line =>
 {
-    var part = line.Split(":");
-    int gameID = int.Parse(part[0].Split(" ")[1]);
-
+    var (gameId, gameData) = line.Split(":") switch
+    {
+        [string id, string data] => (int.Parse(id.Split(' ')[1]), data),
+        _ => throw new InvalidDataException("Line invalid"),
+    };
 
     (int red, int blue, int green) minByColor = (0, 0, 0);
 
-    foreach (var reaveal in part[1].Split(";"))
-    {
-        foreach (var colorReveal in reaveal.Trim().Split(","))
-        {
-            var colorPart = colorReveal.Trim().Split(" ");
-            var nbCube = int.Parse(colorPart[0]);
+    minByColor = gameData.Split(";").SelectMany(reaveal =>
+         reaveal.Trim().Split(",").Select(
+         (string color, int nbCube) (colorReveal) => colorReveal.Trim().Split(" ") switch
+             {
+                 [var nb, var c] => (c, int.Parse(nb)),
+                 _ => throw new InvalidDataException(),
+             }
+        )
+    )
+     .Aggregate(minByColor, (agg, e) => e.color switch
+     {
+         "red" => (Math.Max(e.nbCube, agg.red), agg.blue, agg.green),
+         "green" => (agg.red, agg.blue, Math.Max(agg.green, e.nbCube)),
+         "blue" => (agg.red, Math.Max(agg.blue, e.nbCube), agg.green),
+         _ => agg,
+     });
 
-            minByColor = colorPart[1] switch
-            {
-                "red" => (Math.Max(nbCube, minByColor.red), minByColor.blue, minByColor.green),
-                "green" => (minByColor.red, minByColor.blue, Math.Max(minByColor.green, nbCube)),
-                "blue" => (minByColor.red, Math.Max(minByColor.blue, nbCube), minByColor.green),
-                _ => minByColor,
-            };
-
-        }
-    }
     return minByColor.red * minByColor.blue * minByColor.green;
-
 })
     .Sum();
 
