@@ -1,7 +1,4 @@
-﻿using System.Drawing;
-using System.Linq;
-
-const int maxRedCubes = 12;
+﻿const int maxRedCubes = 12;
 const int maxGreenCubes = 13;
 const int maxBlueCubes = 14;
 
