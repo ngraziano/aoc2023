@@ -3,7 +3,7 @@ var symbolCoordinate = File.ReadLines("input.txt").SelectMany(
     {
         return line.SelectMany(
             (car, columNumber) =>
-                car != '.' && !char.IsDigit(car) ? new[] { (lineNumber, columNumber) } : Array.Empty<(int lineNumber, int columNumber)>()
+                car != '.' && !char.IsDigit(car) ? [(lineNumber, columNumber)] : Array.Empty<(int lineNumber, int columNumber)>()
         );
     }
 ).ToList();
@@ -45,14 +45,9 @@ var sum = numberList.Where((elem) =>
 Console.WriteLine($"Sum partnumber {sum}");
 
 var gearCoordinate = File.ReadLines("input.txt").SelectMany(
-    (line, lineNumber) =>
-    {
-        return line.SelectMany(
-            (car, columNumber) =>
-                car == '*' ? new[] { (lineNumber, columNumber) } : Array.Empty<(int lineNumber, int columNumber)>()
-        );
-    }
-).ToList();
+    (line, lineNumber) => line.SelectMany(
+            (car, columNumber) => car == '*' ? [(lineNumber, columNumber)] : Array.Empty<(int lineNumber, int columNumber)>()
+        ));
 
 var sumratio = gearCoordinate.Select(g =>
         numberList.Where(elem =>
@@ -60,7 +55,7 @@ var sumratio = gearCoordinate.Select(g =>
             g.columNumber <= elem.endCol + 1 &&
             g.lineNumber >= elem.lineNumber - 1 &&
             g.lineNumber <= elem.lineNumber + 1
-        ).ToList()
-    ).Where(ratiolist => ratiolist.Count == 2).Select(ratioList => ratioList[0].number * ratioList[1].number).Sum();
+        )
+    ).Where(ratiolist => ratiolist.Count() == 2).Select(ratioList => ratioList.First().number * ratioList.Last().number).Sum();
 
 Console.WriteLine($"Sum of gear ratio {sumratio}");

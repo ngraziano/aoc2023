@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 static long NbMatchI(Span<char> condition, int firstGroup, IEnumerable<int> conditionGroups, bool wasInGroup)
 {
-    return NbMatchC(condition, firstGroup, conditionGroups, wasInGroup, new Dictionary<(string, int, int, bool), long>());
+    return NbMatchC(condition, firstGroup, conditionGroups, wasInGroup, []);
 }
 
 static long NbMatchC(Span<char> condition, int firstGroup, IEnumerable<int> conditionGroups, bool wasInGroup, Dictionary<(string, int, int, bool), long> cache)
@@ -18,7 +18,7 @@ static long NbMatchC(Span<char> condition, int firstGroup, IEnumerable<int> cond
     {
         return (firstGroup == 0 && !conditionGroups.Any()) ? 1 : 0;
     }
-    
+
     var path1 = 0L;
     var currentState = condition[0];
     if (currentState == '.' || currentState == '?')
@@ -77,7 +77,7 @@ Console.WriteLine($"Part 1 {sumNb}");
 
 var stopwatch0 = Stopwatch.StartNew();
 var sumNbUnfold = File.ReadLines("input.txt")
-  //  .AsParallel().AsUnordered()
+    //  .AsParallel().AsUnordered()
     .Select((line, index) =>
     {
 
@@ -150,7 +150,7 @@ static long NbMatchNew(string chars, List<int> conditionGroups)
 
 static long NbMatchNewCached(string chars, List<int> conditionGroups)
 {
-    return NbMatchNewCachedC(chars, conditionGroups, new Dictionary<(string, int), long>());
+    return NbMatchNewCachedC(chars, conditionGroups, []);
 }
 
 static long NbMatchNewCachedC(string chars, List<int> conditionGroups, Dictionary<(string, int), long> cache)

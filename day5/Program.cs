@@ -2,7 +2,7 @@
 using day5;
 using System.Text.RegularExpressions;
 
-IEnumerable<long> CreateLongRange(long start, long count)
+static IEnumerable<long> CreateLongRange(long start, long count)
 {
 
     return new LongRange(start, count);

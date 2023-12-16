@@ -29,15 +29,17 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "day12", "day12\day12.csproj
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "day13", "day13\day13.csproj", "{FBEC88BB-EB96-4EB8-949D-89BE4AF6157F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "day14", "day14\day14.csproj", "{6939B14B-BE5F-41AF-BFC2-2D35BD239C9E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "day14", "day14\day14.csproj", "{6939B14B-BE5F-41AF-BFC2-2D35BD239C9E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "day15", "day15\day15.csproj", "{01448144-663D-4DE3-91E5-B4BBD5278983}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "day15", "day15\day15.csproj", "{01448144-663D-4DE3-91E5-B4BBD5278983}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Éléments de solution", "Éléments de solution", "{77FF2CBA-5A9E-449B-80B6-013A56C417F9}"
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
 		README.md = README.md
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "day16", "day16\day16.csproj", "{C387B734-1CC8-42AA-8D66-7718C36C1D26}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -105,6 +107,10 @@ Global
 		{01448144-663D-4DE3-91E5-B4BBD5278983}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{01448144-663D-4DE3-91E5-B4BBD5278983}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{01448144-663D-4DE3-91E5-B4BBD5278983}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C387B734-1CC8-42AA-8D66-7718C36C1D26}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C387B734-1CC8-42AA-8D66-7718C36C1D26}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C387B734-1CC8-42AA-8D66-7718C36C1D26}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C387B734-1CC8-42AA-8D66-7718C36C1D26}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
