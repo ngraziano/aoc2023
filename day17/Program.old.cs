@@ -1,6 +1,5 @@
 ﻿#if true
 
-using System.Collections.Concurrent;
 
 const string file = "input.txt";
 
@@ -10,9 +9,13 @@ var board = File.ReadLines(file)
 PathTesting.MaxPos = (board[0].Length - 1, board.Length - 1);
 
 // X=Y
-// get a max 
-var currentMinimal = Enumerable.Range(0, PathTesting.MaxPos.X)
-    .Select(x => board[x][x + 1] + board[x + 1][x + 1]).Sum();
+// get a max estimate
+// var currentMinimal = Enumerable.Range(0, PathTesting.MaxPos.X)
+//    .Select(x => board[x][x + 1] + board[x + 1][x + 1]).Sum();
+//var currentMinimal = PathTesting.MaxPos.X * PathTesting.MaxPos.Y * 9;
+var currentMinimal = 2 * (Enumerable.Range(0, PathTesting.MaxPos.X).Select(x => board[0][x]).Sum() +
+     Enumerable.Range(0, PathTesting.MaxPos.Y).Select(y => board[y][PathTesting.MaxPos.X]).Sum());
+
 #if false
 var pathTotest = new List<PathTesting>()
 {
@@ -91,7 +94,7 @@ while (pathTotest.Count > 0)
 };
 #endif
 
-
+#if false
 var pathTotest = new Stack<PathTesting>();
 pathTotest.Push(
     new()
@@ -101,24 +104,30 @@ pathTotest.Push(
         Pos = (0, 0),
     });
 pathTotest.Push(new()
-    {
-        Direction = Direction.S,
-        NbStraight = 0,
-        Pos = (0,0),
-  //      OldPos = []
-    }
+{
+    Direction = Direction.S,
+    NbStraight = 0,
+    Pos = (0, 0),
+    //      OldPos = []
+}
 );
+
+    
 int i = 0;
 
 var alreadyThere = new Dictionary<(int X, int Y, Direction D, int NbStraight), int>();
+int maxX = 0;
+int maxY = 0;
+
+
 
 while (pathTotest.TryPop(out var path))
 {
-    
+
     if (path.HeatLoss > currentMinimal)
         continue;
 
-    if (alreadyThere.TryGetValue((path.Pos.X, path.Pos.Y, path.Direction, path.NbStraight), out var lostSeen) 
+    if (alreadyThere.TryGetValue((path.Pos.X, path.Pos.Y, path.Direction, path.NbStraight), out var lostSeen)
         && lostSeen <= path.HeatLoss)
     {
         continue;
@@ -126,23 +135,95 @@ while (pathTotest.TryPop(out var path))
 
     alreadyThere[(path.Pos.X, path.Pos.Y, path.Direction, path.NbStraight)] = path.HeatLoss;
 
-    if (path.Pos == PathTesting.MaxPos && path.HeatLoss < currentMinimal)
+    if (path.Pos == PathTesting.MaxPos && path.NbStraight >= 4 && path.HeatLoss < currentMinimal)
     {
         currentMinimal = path.HeatLoss;
-    } 
+    }
     else
     {
         i++;
-        if(i%100000==0)
-        Console.WriteLine($"{i} {pathTotest.Count}    =>  {path.HeatLoss} | {currentMinimal}");
-
+        maxX = Math.Max(maxX, path.Pos.X);
+        maxY = Math.Max(maxY, path.Pos.Y);
+        if (i % 1000000 == 0)
+        {
+            Console.WriteLine($"{i} {pathTotest.Count} ({maxX},{maxY})    =>  {path.HeatLoss} | {currentMinimal}");
+            maxX = 0;
+            maxY=0;
+        }
         foreach (var np in path.Move(board))
         {
+            // Console.WriteLine($"{np.Pos} {np.Direction}  = {np.NbStraight}");
             pathTotest.Push(np);
         }
     }
 }
+#endif
 
+var pathTotest = new PriorityQueue<PathTesting, int>();
+pathTotest.Enqueue(
+    new()
+    {
+        Direction = Direction.E,
+        NbStraight = 0,
+        Pos = (0, 0),
+    }, 0);
+pathTotest.Enqueue(
+    new()
+    {
+        Direction = Direction.S,
+        NbStraight = 0,
+        Pos = (0, 0),
+        //      OldPos = []
+    }, 0);
+
+int i = 0;
+
+var alreadyThere = new Dictionary<(int X, int Y, Direction D, int NbStraight), int>();
+int maxX = 0;
+int maxY = 0;
+
+
+
+while (true)
+{
+
+    var path = pathTotest.Dequeue();
+
+    
+    if (alreadyThere.TryGetValue((path.Pos.X, path.Pos.Y, path.Direction, path.NbStraight), out var lostSeen)
+        /*&& lostSeen <= path.HeatLoss */)
+    {
+        continue;
+    }
+
+    alreadyThere[(path.Pos.X, path.Pos.Y, path.Direction, path.NbStraight)] = path.HeatLoss;
+    
+    if (path.Pos == PathTesting.MaxPos )
+    {
+        if(path.NbStraight >= 4)
+        {
+            currentMinimal = path.HeatLoss;
+            break;
+        }
+    }
+    else
+    {
+        i++;
+        maxX = Math.Max(maxX, path.Pos.X);
+        maxY = Math.Max(maxY, path.Pos.Y);
+        if (i % 1000000 == 0)
+        {
+            Console.WriteLine($"{i} {pathTotest.Count} ({maxX},{maxY})    =>  {path.HeatLoss} | {currentMinimal}");
+            maxX = 0;
+            maxY = 0;
+        }
+        foreach (var np in path.Move(board))
+        {
+            // Console.WriteLine($"{np.Pos} {np.Direction}  = {np.NbStraight}");
+            pathTotest.Enqueue(np,np.HeatLoss);
+        }
+    }
+}
 
 Console.WriteLine($"Part 1 {currentMinimal}");
 
@@ -173,7 +254,7 @@ struct PathTesting
             yield break;
         }
 
-        if (NbStraight < 2)
+        if (NbStraight < 9)
         {
             yield return new PathTesting()
             {
@@ -185,22 +266,25 @@ struct PathTesting
             };
         }
 
-        yield return new PathTesting()
+        if (NbStraight > 2)
         {
-            Direction = (Direction)(((int)Direction + 1) % 4),
-            NbStraight = 0,
-            HeatLoss = HeatLoss + board[newPos.Y][newPos.X],
-            Pos = newPos,
-            //        OldPos = [.. OldPos, (newPos, Direction)],
-        };
-        yield return new PathTesting()
-        {
-            Direction = (Direction)(((int)Direction + 3) % 4),
-            NbStraight = 0,
-            HeatLoss = HeatLoss + board[newPos.Y][newPos.X],
-            Pos = newPos,
-            //        OldPos = [.. OldPos, (newPos, Direction)],
-        };
+            yield return new PathTesting()
+            {
+                Direction = (Direction)(((int)Direction + 1) % 4),
+                NbStraight = 0,
+                HeatLoss = HeatLoss + board[newPos.Y][newPos.X],
+                Pos = newPos,
+                //        OldPos = [.. OldPos, (newPos, Direction)],
+            };
+            yield return new PathTesting()
+            {
+                Direction = (Direction)(((int)Direction + 3) % 4),
+                NbStraight = 0,
+                HeatLoss = HeatLoss + board[newPos.Y][newPos.X],
+                Pos = newPos,
+                //        OldPos = [.. OldPos, (newPos, Direction)],
+            };
+        }
     }
     private static (int X, int Y) MovePos(Direction direction, (int X, int Y) pos)
     {
