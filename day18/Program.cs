@@ -11,86 +11,149 @@ var instruction = File.ReadLines("input.txt").Select(line =>
     return (direction, length);
 });
 
-var (maxX, maxY) = (461937, 2000);
-var digged = Enumerable.Range(0, maxX).Select(_ => Enumerable.Range(0, maxY).Select(_ => new Space()).ToArray()).ToArray();
+var (x, y) = (0, 0);
 
-var (x, y) = (5, 5);
-digged[x][y].IsDigged = true;
-foreach (var (direction, length) in instruction)
+List<Segment> segments = instruction.Select(instruction =>
 {
-    IEnumerable<(int x, int y)> rangeToDig;
-    switch (direction)
+    Segment segment;
+    switch (instruction.direction)
     {
         case 'U':
-            rangeToDig = Enumerable.Range(y - length, length).Select(ny => (x, ny));
-            y -= length;
+            segment = new() { Direction = instruction.direction, XMin = x, XMax = x, YMin = y - instruction.length, YMax = y };
+            y -= instruction.length;
             break;
         case 'D':
-            rangeToDig = Enumerable.Range(y + 1, length).Select(ny => (x, ny));
-            y += length;
+            segment = new() { Direction = instruction.direction, XMin = x, XMax = x, YMin = y, YMax = y + instruction.length };
+            y += instruction.length;
             break;
         case 'L':
-            rangeToDig = Enumerable.Range(x - length, length).Select(nx => (nx, y));
-            x -= length;
+            segment = new() { Direction = instruction.direction, XMin = x - instruction.length, XMax = x, YMin = y, YMax = y };
+            x -= instruction.length;
             break;
         case 'R':
-            rangeToDig = Enumerable.Range(x + 1, length).Select(nx => (nx, y));
-            x += length;
+            segment = new() { Direction = instruction.direction, XMin = x, XMax = x + instruction.length, YMin = y, YMax = y };
+            x += instruction.length;
             break;
         default:
             throw new InvalidOperationException();
     }
-    foreach (var coo in rangeToDig)
+    return segment;
+})
+//.OrderBy(e => e.Direction switch
+//{
+//    'U' => 0,
+//    'D' => 0,
+//   _ => 1,
+//
+//})
+.ToList();
+
+(int xmin, int xmax, int ymin, int ymax) limit = segments.Aggregate((int.MaxValue, int.MinValue, int.MaxValue, int.MinValue),
+    ((int xmin, int xmax, int ymin, int ymax) agg, Segment s)
+    => (Math.Min(agg.xmin, s.XMin), Math.Max(agg.xmax, s.XMax), Math.Min(agg.ymin, s.YMin), Math.Max(agg.ymax, s.YMax)));
+
+
+var nbInside = 0L;
+for (int j = limit.ymin; j < limit.ymax + 1; j++)
+{
+    bool isInside = false;
+    bool previousInside = false;
+    bool isTop = false;
+    bool isBottom = false;
+    int i = limit.xmin - 1;
+    foreach (Segment segment in segments.Where(s => s.PointBelongToLine(j) && (s.Direction == 'U' || s.Direction == 'D')).OrderBy(s => s.XMin))
     {
-        digged[coo.x][coo.y].IsDigged = true;
+
+        if (isInside)
+        {
+            nbInside += segment.XMin - i - 1;
+//            Console.Write(new string('#', segment.XMin - i - 1));
+        }
+        else
+        {
+//            Console.Write(new string('.', segment.XMin - i - 1));
+        }
+        nbInside++;
+      //  Console.Write('*');
+        bool wasTop = isTop;
+        isTop = segment.YMax == j;
+        bool wasBottom = isBottom;
+        isBottom = segment.YMin == j;
+
+        if (!(isTop || isBottom))
+        {
+
+            isInside = !isInside;
+        }
+        else if (!wasBottom && !wasTop)
+        {
+            previousInside = isInside;
+            isInside = true;
+        }
+        else if ((isBottom && wasBottom) || (isTop && wasTop))
+        {
+            isInside = previousInside;
+            isTop = false;
+            isBottom = false;
+        }
+        else if ((isTop && wasBottom) || (isBottom && wasTop))
+        {
+            isInside = !previousInside;
+            isTop = false;
+            isBottom = false;
+        }
+
+
+        i = segment.XMin;
     }
+//    Console.WriteLine();
 }
 
-bool modificationMade = true;
-for (int i = 0; i < maxY; i++)
+Console.WriteLine($"Part 1 Total digger {nbInside}");
+#if false
+for (int j = limit.ymin; j < limit.ymax + 1; j++)
 {
-    digged[0][i].IsOutside = true;
-    digged[maxX - 1][i].IsOutside = true;
-}
-for (int i = 0; i < maxX; i++)
-{
-    digged[i][0].IsOutside = true;
-    digged[i][maxX - 1].IsOutside = true;
-}
-while (modificationMade)
-{
-    modificationMade = false;
-    for (int i = 1; i < maxY - 1; i++)
+    bool isOuside = true;
+    for (int i = limit.xmin - 1; i < limit.xmax + 1; i++)
     {
-        for (int j = 1; j < maxX; j++)
+
+        var s1 = segments.FindIndex(s => s.PointBelong(i, j));
+        if (s1 >= 0 || !isOuside)
         {
-            var e = digged[i][j];
-            if (!e.IsOutside && !e.IsDigged)
+
+            nbInside++;
+            if (s1 >= 0)
             {
-                if (digged[i - 1][j].IsOutside || digged[i + 1][j].IsOutside || digged[i][j - 1].IsOutside || digged[i][j + 1].IsOutside)
-                {
-                    modificationMade = true;
-                    e.IsOutside = true;
-                }
+                //       Console.Write('*');
+            }
+            else
+            {
+                //     Console.Write('#');
             }
         }
+        else
+        {
+            //     Console.Write('.');
+        }
+
+        if (s1 >= 0)
+        {
+            if ((segments[s1].Direction == 'U' || segments[s1].Direction == 'D') && segments[s1].YMax != j)
+            {
+                isOuside = !isOuside;
+            }
+
+        }
     }
+    Console.WriteLine();
 }
-/*
-foreach (var line in Enumerable.Range(0, maxY).Select(
-    j => new string(Enumerable.Range(0, maxY).Select(i => digged[i][j].IsDigged ? '#' : '.').ToArray())
-))
-{
-    Console.WriteLine(line);
-}*/
-
-var totaldigged = digged.Select(c => c.Count(e => !e.IsOutside)).Sum();
-
-Console.WriteLine($"Part 1 Total digger {totaldigged}");
 
 
+Console.WriteLine($"Part 1 Total digger {nbInside}");
+#endif
 
-instruction = File.ReadLines("input0.txt").Select(line =>
+
+instruction = File.ReadLines("input.txt").Select(line =>
 {
     var linepart = line.Split(' ');
     var direction = linepart[2][7] switch
@@ -100,92 +163,116 @@ instruction = File.ReadLines("input0.txt").Select(line =>
         '2' => 'L',
         '3' => 'U',
         _ => throw new InvalidDataException(),
-    } ;
+    };
     var length = int.Parse(linepart[2][2..7], NumberStyles.HexNumber);
 
     return (direction, length);
 });
 
- (maxX, maxY) = (20000, 20000);
- digged = Enumerable.Range(0, maxX).Select(_ => Enumerable.Range(0, maxY).Select(_ => new Space()).ToArray()).ToArray();
 
- (x, y) = (maxX / 2, maxY / 2);
-digged[x][y].IsDigged = true;
-foreach (var (direction, length) in instruction)
-{
-    IEnumerable<(int x, int y)> rangeToDig;
-    switch (direction)
-    {
-        case 'U':
-            rangeToDig = Enumerable.Range(y - length, length).Select(ny => (x, ny));
-            y -= length;
-            break;
-        case 'D':
-            rangeToDig = Enumerable.Range(y + 1, length).Select(ny => (x, ny));
-            y += length;
-            break;
-        case 'L':
-            rangeToDig = Enumerable.Range(x - length, length).Select(nx => (nx, y));
-            x -= length;
-            break;
-        case 'R':
-            rangeToDig = Enumerable.Range(x + 1, length).Select(nx => (nx, y));
-            x += length;
-            break;
-        default:
-            throw new InvalidOperationException();
-    }
-    foreach (var coo in rangeToDig)
-    {
-        digged[coo.x][coo.y].IsDigged = true;
-    }
-}
 
- modificationMade = true;
-for (int i = 0; i < maxY; i++)
+
+
+(x, y) = (0, 0);
+
+segments = instruction.Select(instruction =>
 {
-    digged[0][i].IsOutside = true;
-    digged[maxX - 1][i].IsOutside = true;
-}
-for (int i = 0; i < maxX; i++)
+   Segment segment;
+   switch (instruction.direction)
+   {
+       case 'U':
+           segment = new() { Direction = instruction.direction, XMin = x, XMax = x, YMin = y - instruction.length, YMax = y };
+           y -= instruction.length;
+           break;
+       case 'D':
+           segment = new() { Direction = instruction.direction, XMin = x, XMax = x, YMin = y, YMax = y + instruction.length };
+           y += instruction.length;
+           break;
+       case 'L':
+           segment = new() { Direction = instruction.direction, XMin = x - instruction.length, XMax = x, YMin = y, YMax = y };
+           x -= instruction.length;
+           break;
+       case 'R':
+           segment = new() { Direction = instruction.direction, XMin = x, XMax = x + instruction.length, YMin = y, YMax = y };
+           x += instruction.length;
+           break;
+       default:
+           throw new InvalidOperationException();
+   }
+   return segment;
+}).ToList();
+
+limit = segments.Aggregate((int.MaxValue, int.MinValue, int.MaxValue, int.MinValue),
+   ((int xmin, int xmax, int ymin, int ymax) agg, Segment s)
+   => (Math.Min(agg.xmin, s.XMin), Math.Max(agg.xmax, s.XMax), Math.Min(agg.ymin, s.YMin), Math.Max(agg.ymax, s.YMax)));
+
+nbInside = 0;
+
+Console.WriteLine($"Line Range {limit.ymin}..{limit.ymax}");
+
+for (int j = limit.ymin; j < limit.ymax + 1; j++)
 {
-    digged[i][0].IsOutside = true;
-    digged[i][maxX - 1].IsOutside = true;
-}
-while (modificationMade)
-{
-    modificationMade = false;
-    for (int i = 1; i < maxY - 1; i++)
+    if (j % 1000 == 0)
     {
-        for (int j = 1; j < maxX; j++)
+        Console.WriteLine($"Line {j}");
+    }
+    bool isInside = false;
+    bool previousInside = false;
+    bool isTop = false;
+    bool isBottom = false;
+    int i = limit.xmin - 1;
+    foreach (Segment segment in segments.Where(s => s.PointBelongToLine(j) && (s.Direction == 'U' || s.Direction == 'D')).OrderBy(s => s.XMin))
+    {
+        if (isInside)
         {
-            var e = digged[i][j];
-            if (!e.IsOutside && !e.IsDigged)
-            {
-                if (digged[i - 1][j].IsOutside || digged[i + 1][j].IsOutside || digged[i][j - 1].IsOutside || digged[i][j + 1].IsOutside)
-                {
-                    modificationMade = true;
-                    e.IsOutside = true;
-                }
-            }
+            nbInside += segment.XMin - i - 1;
         }
+        nbInside++;
+        bool wasTop = isTop;
+        isTop = segment.YMax == j;
+        bool wasBottom = isBottom;
+        isBottom = segment.YMin == j;
+
+        if (!(isTop || isBottom))
+        {
+            isInside = !isInside;
+        }
+        else if (!wasBottom && !wasTop)
+        {
+            previousInside = isInside;
+            isInside = true;
+        }
+        else if ((isBottom && wasBottom) || (isTop && wasTop))
+        {
+            isInside = previousInside;
+            isTop = false;
+            isBottom = false;
+        }
+        else if ((isTop && wasBottom) || (isBottom && wasTop))
+        {
+            isInside = !previousInside;
+            isTop = false;
+            isBottom = false;
+        }
+
+
+        i = segment.XMin;
     }
 }
 
-foreach (var line in Enumerable.Range(0, maxY).Select(
-    j => new string(Enumerable.Range(0, maxY).Select(i => digged[i][j].IsDigged ? '#' : '.').ToArray())
-))
+Console.WriteLine($"Part 2 Total digger {nbInside}");
+
+public record Segment
 {
-    Console.WriteLine(line);
+    public required int XMin { get; init; }
+    public required int XMax { get; init; }
+    public required int YMin { get; init; }
+    public required int YMax { get; init; }
+    public required char Direction { get; init; }
+
+    public bool PointBelong(int x, int y)
+        => x >= XMin && y >= YMin && x <= XMax && y <= YMax;
+
+    public bool PointBelongToLine(int y) => y >= YMin && y <= YMax;
 }
 
-var totaldigged2 = digged.Select(c => c.Count(e => !e.IsOutside)).Sum();
-
-Console.WriteLine($"Part 2 Total digger {totaldigged2}");
-
-public class Space
-{
-    public bool IsDigged { get; set; }
-
-    public  bool IsOutside {  get; set; }
-}
