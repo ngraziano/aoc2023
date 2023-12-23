@@ -23,7 +23,7 @@ int nbRemove = 0;
 
 for (int i = 0; i < bricks.Count; i++)
 {
-    var simulBrick = bricks.Where((_, idx) => idx != i).ToList();
+    List<(P3 Start, P3 End)> simulBrick = [.. bricks[..i], .. bricks[(i + 1)..]];
 
     var canGoDown = false;
     for (int j = i; j < simulBrick.Count; j++)
