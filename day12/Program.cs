@@ -153,7 +153,7 @@ static long NbMatchNewCached(string chars, List<int> conditionGroups)
     return NbMatchNewCachedC(chars, conditionGroups, []);
 }
 
-static long NbMatchNewCachedC(string chars, List<int> conditionGroups, Dictionary<(string, int), long> cache)
+static long NbMatchNewCachedC(ReadOnlySpan<char> chars, List<int> conditionGroups, Dictionary<(string, int), long> cache)
 {
     if (conditionGroups.Count == 0)
         return chars.Contains('#') ? 0L : 1L;
@@ -163,7 +163,7 @@ static long NbMatchNewCachedC(string chars, List<int> conditionGroups, Dictionar
     if (chars.Length < nbToPut)
         return 0L;
 
-    var key = (chars, conditionGroups.Aggregate(0, (acc, val) => (acc * 10) + val));
+    var key = (chars.ToString(), conditionGroups.Aggregate(0, (acc, val) => (acc * 10) + val));
     if (cache.TryGetValue(key, out var val))
     {
         return val;
@@ -176,7 +176,7 @@ static long NbMatchNewCachedC(string chars, List<int> conditionGroups, Dictionar
     for (int i = 0; i < chars.Length - (nbToPut - 1); i++)
     {
         // #??#.
-        var isValid = chars[i..(i + nbDefect)].All(c => c == '#' || c == '?');
+        var isValid = !chars[i..(i + nbDefect)].ContainsAnyExcept(['#', '?']);
 
         if (!isValid)
         {
@@ -226,7 +226,7 @@ Console.WriteLine($"Part 1 {sumNb2}");
 
 var stopwatch = Stopwatch.StartNew();
 var sumNbUnfoldN = File.ReadLines("input.txt")
-    .Select((line, index) =>
+    .Select((line) =>
     {
         var linePart = line.Split(' ');
         var condition0 = linePart[0];
@@ -236,10 +236,7 @@ var sumNbUnfoldN = File.ReadLines("input.txt")
         var conditionGroups = conditionGroups0.Concat(conditionGroups0).Concat(conditionGroups0).Concat(conditionGroups0).Concat(conditionGroups0).ToList();
 
 
-        var nbMatch = NbMatchNewCached(condition, conditionGroups);
-
-        //  Console.WriteLine($"({index:000}) {nbMatch,10} {line} ");
-        return nbMatch;
+        return NbMatchNewCached(condition, conditionGroups);
     }).Sum();
 stopwatch.Stop();
 

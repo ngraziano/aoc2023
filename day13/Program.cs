@@ -6,17 +6,10 @@
 static IEnumerable<int> FindAllMirrors(IList<string> data)
 {
     var nbLigne = data.Count;
-    return Enumerable.Range(0, nbLigne).Where(i =>
-    {
-        for (int j = 0; i - j >= 0 && i + j + 1 < nbLigne; j++)
-        {
-            if (data[i - j] != data[i + j + 1])
-            {
-                return false;
-            }
-        }
-        return true;
-    }).Select(i => i + 1);
+    return Enumerable.Range(0, nbLigne)
+        .Where(i =>
+        Enumerable.Range(0, Math.Min(i + 1, nbLigne - 1 - i))
+        .All(j => data[i - j] == data[i + j + 1])).Select(i => i + 1);
 }
 
 static List<string> TransposeStrings(List<string> data) =>
@@ -24,7 +17,7 @@ static List<string> TransposeStrings(List<string> data) =>
         i => new string(data.Select(l => l[i]).ToArray())
     ).ToList();
 
-static bool diffByOnlyOne(string a, string b)
+static bool diffByOnlyOne(ReadOnlySpan<char> a, ReadOnlySpan<char> b)
 {
     int nbDiff = 0;
     for (int i = 0; i < a.Length; i++)
@@ -55,12 +48,9 @@ var total = File.ReadLines("input.txt").Split(string.IsNullOrEmpty).Select(block
 Console.WriteLine($"Part1 {total}");
 
 
-int patternNb = 0;
-var totalPart2 = File.ReadLines("input.txt").Split(string.IsNullOrEmpty).Select(block =>
+var totalPart2 = File.ReadLines("input.txt").Split(string.IsNullOrEmpty).Select((block, patternNb) =>
 {
     var data = block.ToList();
-
-    patternNb++;
 
     int hOriginalMirror = FindMirror(data);
     var newHMirrors = data[..^1].SelectMany((smudgeLine, smudgeLineIndex) =>
