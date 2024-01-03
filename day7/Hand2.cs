@@ -16,7 +16,7 @@
 
         private static int CalculateHandType(string hand)
         {
-            var nbEquals = hand.Select(c => hand.Count(d => c == d && c != 'J')).OrderDescending().ToList();
+            var nbEquals = hand.Distinct().Select(c => hand.Count(d => c == d && c != 'J')).OrderDescending().ToList();
             var nbJoker = hand.Count(c => c == 'J');
 
             return (nbEquals, nbJoker) switch
@@ -31,12 +31,12 @@
                 ([3, ..], 1) => 5,
                 ([2, ..], 2) => 5,
                 ([1, ..], 3) => 5,
-                ([3, _, _, 2, ..], 0) => 4,// Full house
-                ([2, _, 2, ..], 1) => 4,
+                ([3, 2, ..], 0) => 4,// Full house
+                ([2, 2, ..], 1) => 4,
                 ([3, ..], 0) => 3, // Threee of kind
                 ([2, ..], 1) => 3,
                 ([1, ..], 2) => 3,
-                ([2, _, 2, ..], 0) => 2, // Two Pair
+                ([2, 2, ..], 0) => 2, // Two Pair
                 ([2, ..], 0) => 1, // Pair
                 ([1, ..], 1) => 1,
                 _ => 0,
