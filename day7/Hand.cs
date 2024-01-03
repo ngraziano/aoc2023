@@ -20,16 +20,18 @@
         {
             var nbEquals = hand.Select(c => hand.Count(d => c == d)).OrderDescending().ToList();
 
-            return nbEquals[0] switch
+
+            return nbEquals switch
             {
-                5 => 6,// Five of kind
-                4 => 5,// Four of kind
-                3 when nbEquals[3] == 2 => 4,// Full house
-                3 => 3, // Threee of kind
-                2 when nbEquals[2] == 2 => 2, // Two Pair
-                2 => 1, // Pair
+                [5, ..] => 6,// Five of kind
+                [4, ..] => 5,// Four of kind
+                [3, _, _, 2, _] => 4,// Full house
+                [3, ..] => 3, // Threee of kind
+                [2, _, 2, ..] when nbEquals[2] == 2 => 2, // Two Pair
+                [2, ..] => 1, // Pair
                 _ => 0,
             };
+
         }
 
         public int CompareTo(Hand? other)
@@ -41,15 +43,10 @@
                 return handiff;
             }
 
-            for (int i = 0; i < 5; i++)
-            {
-                var diff = CardToStrengh(HandString[i]) - CardToStrengh(other.HandString[i]);
-                if (diff != 0)
-                {
-                    return diff;
-                }
-            }
-            return 0;
+            return HandString.Select(CardToStrengh)
+                .Zip(other.HandString.Select(CardToStrengh))
+                .Select(comp => comp.First - comp.Second)
+                .FirstOrDefault(d => d != 0, 0);
 
         }
 

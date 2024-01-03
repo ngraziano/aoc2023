@@ -19,27 +19,26 @@
             var nbEquals = hand.Select(c => hand.Count(d => c == d && c != 'J')).OrderDescending().ToList();
             var nbJoker = hand.Count(c => c == 'J');
 
-            return nbEquals[0] switch
+            return (nbEquals, nbJoker) switch
             {
-                5 => 6,// Five of kind
-                4 when nbJoker == 1 => 6,
-                3 when nbJoker == 2 => 6,
-                2 when nbJoker == 3 => 6,
-                1 when nbJoker == 4 => 6,
-                0 when nbJoker == 5 => 6,
-                4 => 5,// Four of kind
-                3 when nbJoker == 1 => 5,
-                2 when nbJoker == 2 => 5,
-                1 when nbJoker == 3 => 5,
-                3 when nbEquals[3] == 2 => 4,// Full house
-                2 when nbEquals[2] == 2 && nbJoker == 1 => 4,
-                2 when nbEquals[2] == 1 && nbJoker == 2 => 4,
-                3 => 3, // Threee of kind
-                2 when nbJoker == 1 => 3,
-                1 when nbJoker == 2 => 3,
-                2 when nbEquals[2] == 2 => 2, // Two Pair
-                2 => 1, // Pair
-                1 when nbJoker == 1 => 1,
+                ([5, ..], 0) => 6,// Five of kind
+                ([4, ..], 1) => 6,
+                ([3, ..], 2) => 6,
+                ([2, ..], 3) => 6,
+                ([1, ..], 4) => 6,
+                ([0, ..], 5) => 6,
+                ([4, ..], 0) => 5,// Four of kind
+                ([3, ..], 1) => 5,
+                ([2, ..], 2) => 5,
+                ([1, ..], 3) => 5,
+                ([3, _, _, 2, ..], 0) => 4,// Full house
+                ([2, _, 2, ..], 1) => 4,
+                ([3, ..], 0) => 3, // Threee of kind
+                ([2, ..], 1) => 3,
+                ([1, ..], 2) => 3,
+                ([2, _, 2, ..], 0) => 2, // Two Pair
+                ([2, ..], 0) => 1, // Pair
+                ([1, ..], 1) => 1,
                 _ => 0,
             };
         }
@@ -53,15 +52,10 @@
                 return handiff;
             }
 
-            for (int i = 0; i < 5; i++)
-            {
-                var diff = CardToStrengh(HandString[i]) - CardToStrengh(other.HandString[i]);
-                if (diff != 0)
-                {
-                    return diff;
-                }
-            }
-            return 0;
+            return HandString.Select(CardToStrengh)
+                .Zip(other.HandString.Select(CardToStrengh))
+                .Select(comp => comp.First - comp.Second)
+                .FirstOrDefault(d => d != 0, 0);
 
         }
 
